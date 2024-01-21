@@ -10,7 +10,6 @@ import { ReactFlowProvider, useEdgesState, useNodesState } from 'reactflow'
 import FlowRender from './FlowRender'
 import HeaderTools from './HeaderTools'
 import { FlowContext, FlowContextValue } from './context'
-import AutoSaveAsync from './plugins/AutoSaveAsync'
 import InitialData from './plugins/InitialData'
 
 export type FlowEditProps = {
@@ -48,7 +47,6 @@ export default function FlowEdit(props: FlowEditProps) {
           </section>
 
           <InitialData flowId={props.id} />
-          <AutoSaveAsync />
         </ReactFlowProvider>
       </FlowContext.Provider>
     </>

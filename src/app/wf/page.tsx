@@ -6,13 +6,24 @@
 
 'use client'
 import { flowService } from '@/services/flow'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function WorkflowListPage() {
   const { data } = useQuery({
-    queryKey: ['flow', 'list'],
+    queryKey: ['flow'],
     queryFn: () => flowService.flows(),
+  })
+
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const { mutateAsync } = useMutation({
+    mutationFn: () => flowService.createFlow({ name: '新的流程', nodes: [], edges: [] }),
+    onSuccess(id) {
+      router.push(`/wf/${id}`)
+      queryClient.invalidateQueries({ queryKey: ['flow'] })
+    },
   })
 
   return (
@@ -21,9 +32,9 @@ export default function WorkflowListPage() {
       <hr className="my-4" />
 
       <header className="m-4">
-        <Link href="/wf/add" className="text-emerald-400 border border-emerald-400 p-2">
+        <button type="button" className="text-emerald-400 border border-emerald-400 p-2" onClick={() => mutateAsync()}>
           Add Workflow
-        </Link>
+        </button>
       </header>
 
       <ul className="space-y-2 m-4 list-decimal pl-8">

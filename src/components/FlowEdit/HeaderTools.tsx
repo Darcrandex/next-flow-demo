@@ -4,7 +4,7 @@
  * @author darcrand
  */
 
-import { FlowConfig, Optional } from '@/db'
+import { FlowData, Optional } from '@/db'
 import { useChannel } from '@/hooks/useChannel'
 import { flowService } from '@/services/flow'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -32,8 +32,8 @@ export default function HeaderTools(props: { flowId?: string }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { mutate } = useMutation({
-    mutationFn: (data: Optional<FlowConfig, 'id'>) => {
-      return !!data.id ? flowService.updateFlow(data as FlowConfig) : flowService.createFlow(data)
+    mutationFn: (data: Optional<FlowData, 'id'>) => {
+      return !!data.id ? flowService.updateFlow(data as FlowData) : flowService.createFlow(data)
     },
     onSuccess(data) {
       if (data) {
@@ -51,7 +51,7 @@ export default function HeaderTools(props: { flowId?: string }) {
     // 过滤没有关联的边
     const edges = jsonData.edges.filter((e) => jsonData.nodes.find((n) => n.id === e.target || n.id === e.source))
 
-    const params: Optional<FlowConfig, 'id'> = {
+    const params: Optional<FlowData, 'id'> = {
       ...jsonData,
       edges,
       xml: xmlData,

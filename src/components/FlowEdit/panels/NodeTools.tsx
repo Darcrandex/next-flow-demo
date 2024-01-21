@@ -4,9 +4,9 @@
  * @author darcrand
  */
 
-import { NodeConfig } from '@/db'
+import { NodeData } from '@/db'
 import { flowService } from '@/services/flow'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import { useCallback } from 'react'
 import type { Node, PanelPosition } from 'reactflow'
@@ -45,11 +45,15 @@ const nodeGroups = [
 export default function NodeTools(props: NodeToolsProps) {
   const { nodes } = useFlowContext()
   const reactFlow = useReactFlow()
-  const flowId = useParams().id
+  const flowId = useParams().id as string
+  const queryClient = useQueryClient()
 
-  const { mutate } = useMutation({
-    mutationFn: (params: { node: Omit<Node, 'id'>; data: Omit<NodeConfig, 'id'> }) => {
-      return flowService.createNode(params.node, params.data)
+  const { mutateAsync } = useMutation({
+    mutationFn: async (params: { node: Omit<Node, 'id'>; data: Omit<NodeData, 'id'> }) =>
+      flowService.createNode(params.node, params.data),
+    onSuccess(nodeId) {
+      queryClient.invalidateQueries({ queryKey: ['flow'] })
+      reactFlow.fitView({ nodes: [{ id: nodeId }] })
     },
   })
 
@@ -68,26 +72,19 @@ export default function NodeTools(props: NodeToolsProps) {
         console.error('已存在结束节点')
       }
 
+      // 预设一个新的位置
       const lastNode = nodes[nodes.length - 1]
       const x = 20 + (lastNode?.position.x || 0) + (lastNode?.width || 0)
       const y = lastNode?.position.y || 0
 
       if (matchNode) {
-        mutate({
-          node: {
-            type: matchNode.key,
-            position: { x, y },
-            data: null,
-          },
-          data: {
-            name: matchNode.data.name,
-            flowId: nodes[0].id,
-            type: matchNode.key,
-          },
+        mutateAsync({
+          node: { type: matchNode.key, position: { x, y }, data: null },
+          data: { name: matchNode.data.name, flowId, type: matchNode.key },
         })
       }
     },
-    [mutate, nodes]
+    [flowId, mutateAsync, nodes]
   )
 
   return (

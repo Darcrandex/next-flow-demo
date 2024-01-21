@@ -3,26 +3,26 @@ import type { Edge, Node, Viewport } from 'reactflow'
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & { [P in K]?: T[P] }
 
-export type FlowConfig = {
+export type FlowData = {
   id: string
   name: string
   nodes: Node[]
   edges: Edge[]
-  viewport: Viewport
+  viewport?: Viewport
   xml?: string
 }
 
-export type NodeConfig<NodeData = any> = {
+export type NodeData<T = any> = {
   flowId: string
   id: string
   type: string
   name: string
-  config?: NodeData
+  config?: T
 }
 
 export class MySubClassedDexie extends Dexie {
-  flows!: Table<FlowConfig>
-  nodes!: Table<NodeConfig>
+  flows!: Table<FlowData>
+  nodes!: Table<NodeData>
 
   constructor() {
     super('flow-db')

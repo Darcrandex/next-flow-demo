@@ -4,51 +4,65 @@
  * @author darcrand
  */
 
-import { useCallback, useMemo } from 'react'
+import { NodeData } from '@/db'
+import { flowService } from '@/services/flow'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import type { PanelPosition } from 'reactflow'
 import { Panel } from 'reactflow'
 import { useFlowContext } from '../context'
+import { useNodeQuery } from '../hooks/useNodeQuery'
 
 export type NodeBaseInfoProps = { position?: PanelPosition }
 
 export default function NodeBaseInfo(props: NodeBaseInfoProps) {
-  const { nodes, setNodes, selectedNodeIds } = useFlowContext()
+  const { selectedNodeIds } = useFlowContext()
+  const nodeId = selectedNodeIds[0]
+  const { control, reset, getValues } = useForm<NodeData>({ defaultValues: { name: '' } })
+  const { data: targetNode } = useNodeQuery(nodeId)
 
-  const targetNode = useMemo(() => {
-    if (selectedNodeIds.length !== 1) return undefined
-    const nodeId = selectedNodeIds[0]
-    return nodes.find((v) => v.id === nodeId)
-  }, [nodes, selectedNodeIds])
+  useEffect(() => {
+    if (targetNode) {
+      reset(targetNode)
+    }
+  }, [reset, targetNode])
 
-  const onDataUpdate = useCallback(
-    (data?: any) => {
-      setNodes((arr) =>
-        arr.map((node) =>
-          node.id === targetNode?.id
-            ? { ...node, data: { ...node.data, ...data } }
-            : node
-        )
-      )
+  const queryClient = useQueryClient()
+  const { mutate } = useMutation({
+    mutationFn: (values: any) => flowService.updateNode(values),
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['node'] })
     },
-    [setNodes, targetNode?.id]
-  )
+  })
+
+  const onSubmit = () => mutate(getValues())
 
   if (!targetNode) return null
 
   return (
-    <Panel
-      position={props.position || 'top-right'}
-      className="bg-white w-80 p-4 shadow-lg"
-    >
+    <Panel position={props.position || 'top-right'} className="bg-white w-80 p-4 shadow-lg">
       <h1>节点信息</h1>
 
-      <input
-        type="text"
-        placeholder="请输入节点名称"
-        className="block border w-full px-2 py-1 mt-2 text-sm outline-none focus:border-emerald-300 transition-all"
-        maxLength={20}
-        value={targetNode.data.name || ''}
-        onChange={(e) => onDataUpdate({ name: e.target.value })}
+      <Controller
+        control={control}
+        name="name"
+        render={({ field }) => (
+          <input
+            type="text"
+            placeholder="请输入节点名称"
+            className="block border w-full px-2 py-1 mt-2 text-sm outline-none focus:border-emerald-300 transition-all"
+            maxLength={20}
+            value={field.value}
+            onChange={(e) => field.onChange(e.target.value)}
+            onBlur={onSubmit}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                onSubmit()
+              }
+            }}
+          />
+        )}
       />
     </Panel>
   )

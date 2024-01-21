@@ -10,6 +10,6 @@ const FlowEdit = dynamic(() => import('@/components/FlowEdit'), {
   ssr: false,
 })
 
-export default function WorkflowPage({ params: { code } }: any) {
-  return <FlowEdit id={code} />
+export default function WorkflowPage({ params: { id } }: any) {
+  return <FlowEdit id={id} />
 }

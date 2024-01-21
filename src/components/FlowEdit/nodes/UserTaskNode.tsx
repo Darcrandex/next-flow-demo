@@ -5,21 +5,16 @@
  */
 
 import { cls } from '@/utils/cls'
-import { useCallback } from 'react'
 import type { NodeProps } from 'reactflow'
 import { Handle, NodeToolbar, Position } from 'reactflow'
-import { useFlowContext } from '../context'
+import { useNodeQuery } from '../hooks/useNodeQuery'
+import { useRemoveNode } from '../hooks/useRemoveNode'
 
-export type UserTaskNodeData = { name: string }
-export type UserTaskNodeProps = NodeProps<UserTaskNodeData>
 export const USER_TASK_NODE = 'workflow-user-task-node'
 
-export default function UserTaskNode(props: UserTaskNodeProps) {
-  const { setNodes } = useFlowContext()
-
-  const onRemove = useCallback(() => {
-    setNodes((nds) => nds.filter((node) => node.id !== props.id))
-  }, [setNodes, props.id])
+export default function UserTaskNode(props: NodeProps) {
+  const { remove } = useRemoveNode(props.id)
+  const { data } = useNodeQuery(props.id)
 
   return (
     <>
@@ -29,11 +24,11 @@ export default function UserTaskNode(props: UserTaskNodeProps) {
           props.selected && 'border-emerald-300 shadow-lg'
         )}
       >
-        <p className="font-bold truncate">{props.data.name}</p>
+        <p className="font-bold truncate">{data?.name || '未命名'}</p>
       </div>
 
       <NodeToolbar align="start" className="space-x-2">
-        <button onClick={onRemove}>delete</button>
+        <button onClick={remove}>delete</button>
       </NodeToolbar>
 
       <Handle id="t-t" type="target" position={Position.Top} />

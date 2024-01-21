@@ -1,4 +1,4 @@
-import { FlowConfig, NodeConfig, db } from '@/db'
+import { FlowData, NodeData, db } from '@/db'
 import { nanoid } from 'nanoid'
 import { Node } from 'reactflow'
 
@@ -12,13 +12,13 @@ export const flowService = {
     return await db.flows.get(id)
   },
 
-  createFlow: async (data: Omit<FlowConfig, 'id'>) => {
+  createFlow: async (data: Omit<FlowData, 'id'>) => {
     const id = nanoid()
     await db.flows.add({ ...data, id })
     return id
   },
 
-  updateFlow: async (data: FlowConfig) => {
+  updateFlow: async (data: FlowData) => {
     await db.flows.put(data)
     return data.id
   },
@@ -32,21 +32,27 @@ export const flowService = {
     return db.nodes.get(id)
   },
 
-  createNode: async (node: Omit<Node, 'id'>, data: Omit<NodeConfig, 'id'>) => {
+  createNode: async (node: Omit<Node, 'id'>, data: Omit<NodeData, 'id'>) => {
     const id = nanoid()
     await db.nodes.add({ ...data, id })
-    await db.flows.update(data.flowId, { $push: { nodes: { ...node, id } } })
+    const flow = await db.flows.get(data.flowId)
+    await db.flows.update(data.flowId, { nodes: flow?.nodes.concat({ ...node, id }) || [] })
 
     return id
   },
 
-  updateNode: async (data: NodeConfig) => {
+  updateNode: async (data: NodeData) => {
     db.nodes.put(data)
     return data.id
   },
 
   removeNode: async (id: string) => {
+    const node = await db.nodes.get(id)
+    const flow = node?.flowId ? await db.flows.get(node?.flowId) : undefined
     await db.nodes.delete(id)
-    await db.flows.update(id, { $unset: { nodes: id } })
+
+    if (flow) {
+      await db.flows.update(flow.id, { nodes: flow.nodes.filter((n) => n.id !== id) })
+    }
   },
 }
