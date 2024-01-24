@@ -10,14 +10,14 @@ export function useChannel<T = any>(options: { name: string }) {
   }, [channel])
 
   const send = useCallback(
-    (value: T) => {
-      channel.postMessage(value)
+    (value?: T) => {
+      channel.postMessage(value as T)
     },
     [channel]
   )
 
   const receive = useCallback(
-    (callback: (value: T) => void) => {
+    (callback: (value?: T) => void) => {
       channel.addEventListener('message', callback)
       return () => {
         channel.removeEventListener('message', callback)

@@ -5,14 +5,11 @@
  */
 
 import { useCallback } from 'react'
-import ReactFlow, {
-  Background,
-  MiniMap,
-  addEdge,
-  useOnSelectionChange,
-} from 'reactflow'
+import ReactFlow, { Background, MiniMap, addEdge, useOnSelectionChange } from 'reactflow'
 import 'reactflow/dist/style.css'
 
+import { useChannel } from '@/hooks/useChannel'
+import { AUTO_SAVE_EVENT } from './const/common'
 import { useFlowContext } from './context'
 import EndNode, { END_NODE } from './nodes/EndNode'
 import RobotTaskNode, { ROBOT_TASK_NODE } from './nodes/RobotTaskNode'
@@ -32,15 +29,8 @@ const nodeTypes = {
 }
 
 export default function FlowRender(props: FlowRenderProps) {
-  const {
-    nodes,
-    edges,
-    setEdges,
-    onNodesChange,
-    onEdgesChange,
-    setSelectedNodeIds,
-    setSelectedEdgeIds,
-  } = useFlowContext()
+  const { nodes, edges, setEdges, onNodesChange, onEdgesChange, setSelectedNodeIds, setSelectedEdgeIds } =
+    useFlowContext()
 
   useOnSelectionChange({
     onChange: ({ nodes, edges }) => {
@@ -49,10 +39,13 @@ export default function FlowRender(props: FlowRenderProps) {
     },
   })
 
+  const { send } = useChannel({ name: AUTO_SAVE_EVENT })
   const onConnect = useCallback(
-    (params: any) =>
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
-    [setEdges]
+    (params: any) => {
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds))
+      send()
+    },
+    [send, setEdges]
   )
 
   return (
