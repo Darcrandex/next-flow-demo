@@ -1,8 +1,12 @@
+// 这是一个前端的简单数据库
+// 只是为了模拟后端服务
+
 import Dexie, { Table } from 'dexie'
 import type { Edge, Node, Viewport } from 'reactflow'
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & { [P in K]?: T[P] }
 
+// 流程配置
 export type FlowData = {
   id: string
   name: string
@@ -12,6 +16,7 @@ export type FlowData = {
   xml?: string
 }
 
+// 节点配置
 export type NodeData<T = any> = {
   flowId: string
   id: string

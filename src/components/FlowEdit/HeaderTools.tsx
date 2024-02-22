@@ -44,6 +44,7 @@ export default function HeaderTools(props: { flowId?: string }) {
   })
 
   const { receive } = useChannel({ name: AUTO_SAVE_EVENT })
+
   const onSave = useCallback(() => {
     const jsonData = reactFlow.toObject()
     const xmlData = toXML(pick(['nodes', 'edges'], jsonData))

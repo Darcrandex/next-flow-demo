@@ -28,7 +28,7 @@ export default function WorkflowListPage() {
 
   return (
     <>
-      <h1>WorkflowListPage</h1>
+      <h1 className="p-2 font-bold text-emerald-400">WorkflowListPage</h1>
       <hr className="my-4" />
 
       <header className="m-4">

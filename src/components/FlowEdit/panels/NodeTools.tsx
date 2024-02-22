@@ -5,12 +5,14 @@
  */
 
 import { NodeData } from '@/db'
+import { useChannel } from '@/hooks/useChannel'
 import { flowService } from '@/services/flow'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
 import { useCallback } from 'react'
 import type { Node, PanelPosition } from 'reactflow'
 import { Panel, useReactFlow } from 'reactflow'
+import { AUTO_SAVE_EVENT } from '../const/common'
 import { useFlowContext } from '../context'
 import { END_NODE } from '../nodes/EndNode'
 import { ROBOT_TASK_NODE } from '../nodes/RobotTaskNode'
@@ -47,10 +49,12 @@ export default function NodeTools(props: NodeToolsProps) {
   const reactFlow = useReactFlow()
   const flowId = useParams().id as string
   const queryClient = useQueryClient()
+  const { send } = useChannel({ name: AUTO_SAVE_EVENT })
 
   const { mutateAsync } = useMutation({
-    mutationFn: async (params: { node: Omit<Node, 'id'>; data: Omit<NodeData, 'id'> }) =>
-      flowService.createNode(params.node, params.data),
+    mutationFn: async (params: { node: Omit<Node, 'id'>; data: Omit<NodeData, 'id'> }) => {
+      return flowService.createNode(params.node, params.data)
+    },
     onSuccess(nodeId) {
       queryClient.invalidateQueries({ queryKey: ['flow'] })
       reactFlow.fitView({ nodes: [{ id: nodeId }] })
@@ -78,13 +82,20 @@ export default function NodeTools(props: NodeToolsProps) {
       const y = lastNode?.position.y || 0
 
       if (matchNode) {
-        mutateAsync({
-          node: { type: matchNode.key, position: { x, y }, data: null },
-          data: { name: matchNode.data.name, flowId, type: matchNode.key },
-        })
+        // 注意，这里使用了邪道
+        // 先触发自动保存
+        // 然后再新增节点
+        // 为了保证 viewpoint 和 position 数据的一致
+        setTimeout(() => {
+          send(null)
+          mutateAsync({
+            node: { type: matchNode.key, position: { x, y }, data: null },
+            data: { name: matchNode.data.name, flowId, type: matchNode.key },
+          })
+        }, 200)
       }
     },
-    [flowId, mutateAsync, nodes]
+    [flowId, mutateAsync, nodes, send]
   )
 
   return (

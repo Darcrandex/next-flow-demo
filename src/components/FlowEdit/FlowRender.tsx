@@ -43,7 +43,7 @@ export default function FlowRender(props: FlowRenderProps) {
   const onConnect = useCallback(
     (params: any) => {
       setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds))
-      send()
+      send(null)
     },
     [send, setEdges]
   )
